@@ -1,5 +1,6 @@
 #include "trex_latency_counters.h"
 #include "bp_sim.h"
+#include <iomanip>
 
 /*******************************************************************
 CRFC2544Info
@@ -470,6 +471,21 @@ RXLatency::handle_correct_flow(
     uint64_t d = (hr_time_now - fsp_head->time_stamp );
     dsec_t ctime = ptime_convert_hr_dsec(d);
     curr_rfc2544->add_sample(ctime);
+    std::ofstream myfile;
+    myfile.open("testing.txt", std::ios_base::app);
+    // myfile.open("testing.txt");
+    /*
+    myfile << std::setprecision(6) << std::fixed << "now_sec:" << now_sec() << std::endl;
+    myfile << std::setprecision(6) << std::fixed << "hr_time_now:" << hr_time_now << std::endl;
+    myfile << std::setprecision(6) << std::fixed << "hr_time_now in sec: " << ptime_convert_hr_dsec(hr_time_now) << std::endl;
+    myfile << std::setprecision(6) << std::fixed << "fsp_head->time_stamp:" << fsp_head->time_stamp << std::endl;
+    myfile << std::setprecision(6) << std::fixed << "time_stamp in sec: " << ptime_convert_hr_dsec(fsp_head->time_stamp) << std::endl;
+    myfile << "ctime: " << ctime << std::endl;
+    */
+    uint64_t d_start = (hr_time_now - timer_gd.m_start_time);
+    myfile << std::setprecision(6) << std::fixed << ptime_convert_hr_dsec(d_start);
+    myfile << ":" << ctime << std::endl;
+    myfile.close();
 }
 
 void
