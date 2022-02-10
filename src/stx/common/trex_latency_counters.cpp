@@ -44,10 +44,12 @@ void CRFC2544Info::export_data(rfc2544_info_t_ &obj) {
     m_latency.dump_json(json);
     obj.set_latency_json(json);
     std::ofstream myfile;
-    myfile.open("time-latency.txt");
+    myfile.open("time-latency.data", std::ios::out | std::ios::binary);
     for(const auto& arr : m_time_lat_vector) {
-        myfile << std::setprecision(6) << std::fixed << arr[0]; // elapsed time since start
-        myfile << ":" << arr[1] << std::endl; // latency
+        float time = (float) arr[0];
+        float lat = (float) arr[1];
+        myfile.write( reinterpret_cast<const char*>( &time ), sizeof ( float )); // elapsed time since start
+        myfile.write( reinterpret_cast<const char*>( &lat ), sizeof ( float )); // latency
     }
     myfile.close();
 }
