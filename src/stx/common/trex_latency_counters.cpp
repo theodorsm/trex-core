@@ -31,6 +31,7 @@ void CRFC2544Info::reset() {
     m_dup = 0;
     m_latency.Reset();
     m_jitter.reset();
+    m_time_lat_vector = {};
 }
 
 void CRFC2544Info::export_data(rfc2544_info_t_ &obj) {
@@ -42,6 +43,13 @@ void CRFC2544Info::export_data(rfc2544_info_t_ &obj) {
     obj.set_jitter(m_jitter.get_jitter());
     m_latency.dump_json(json);
     obj.set_latency_json(json);
+    std::ofstream myfile;
+    myfile.open("time-latency.txt");
+    for(const auto& arr : m_time_lat_vector) {
+        myfile << std::setprecision(6) << std::fixed << arr[0]; // elapsed time since start
+        myfile << ":" << arr[1] << std::endl; // latency
+    }
+    myfile.close();
 }
 
 CRFC2544Info CRFC2544Info::operator+= (const CRFC2544Info& in) {
@@ -471,21 +479,10 @@ RXLatency::handle_correct_flow(
     uint64_t d = (hr_time_now - fsp_head->time_stamp );
     dsec_t ctime = ptime_convert_hr_dsec(d);
     curr_rfc2544->add_sample(ctime);
-    std::ofstream myfile;
-    myfile.open("testing.txt", std::ios_base::app);
-    // myfile.open("testing.txt");
-    /*
-    myfile << std::setprecision(6) << std::fixed << "now_sec:" << now_sec() << std::endl;
-    myfile << std::setprecision(6) << std::fixed << "hr_time_now:" << hr_time_now << std::endl;
-    myfile << std::setprecision(6) << std::fixed << "hr_time_now in sec: " << ptime_convert_hr_dsec(hr_time_now) << std::endl;
-    myfile << std::setprecision(6) << std::fixed << "fsp_head->time_stamp:" << fsp_head->time_stamp << std::endl;
-    myfile << std::setprecision(6) << std::fixed << "time_stamp in sec: " << ptime_convert_hr_dsec(fsp_head->time_stamp) << std::endl;
-    myfile << "ctime: " << ctime << std::endl;
-    */
     uint64_t d_start = (hr_time_now - timer_gd.m_start_time);
-    myfile << std::setprecision(6) << std::fixed << ptime_convert_hr_dsec(d_start);
-    myfile << ":" << ctime << std::endl;
-    myfile.close();
+    dsec_t start = ptime_convert_hr_dsec(d_start);
+    std::array<dsec_t, 2> v = {start, ctime};
+    curr_rfc2544->add_time_lat(v);
 }
 
 void
