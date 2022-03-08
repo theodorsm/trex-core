@@ -31,7 +31,7 @@ void CRFC2544Info::reset() {
     m_dup = 0;
     m_latency.Reset();
     m_jitter.reset();
-    m_time_lat_vector = {};
+    m_time_lat_list = std::list<std::array<dsec_t, 2>>();
 }
 
 void CRFC2544Info::export_data(rfc2544_info_t_ &obj) {
@@ -44,8 +44,12 @@ void CRFC2544Info::export_data(rfc2544_info_t_ &obj) {
     m_latency.dump_json(json);
     obj.set_latency_json(json);
     std::ofstream myfile;
-    myfile.open("time-latency.data", std::ios::out | std::ios::binary);
-    for(const auto& arr : m_time_lat_vector) {
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    char filename[100];
+    std::strftime(filename, 60, "time_latency_dist_%Y-%m-%d_%H-%M.data", &tm);
+    myfile.open(filename, std::ios::out | std::ios::binary);
+    for(const auto& arr : m_time_lat_list) {
         float time = (float) arr[0];
         float lat = (float) arr[1];
         myfile.write( reinterpret_cast<const char*>( &time ), sizeof ( float )); // elapsed time since start
