@@ -1,5 +1,6 @@
 #include "trex_latency_counters.h"
 #include "bp_sim.h"
+#include <iomanip>
 
 /*******************************************************************
 CRFC2544Info
@@ -30,6 +31,7 @@ void CRFC2544Info::reset() {
     m_dup = 0;
     m_latency.Reset();
     m_jitter.reset();
+    m_time_lat_list = std::list<std::array<dsec_t, 2>>();
 }
 
 void CRFC2544Info::export_data(rfc2544_info_t_ &obj) {
@@ -41,6 +43,19 @@ void CRFC2544Info::export_data(rfc2544_info_t_ &obj) {
     obj.set_jitter(m_jitter.get_jitter());
     m_latency.dump_json(json);
     obj.set_latency_json(json);
+    std::ofstream myfile;
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    char filename[100];
+    std::strftime(filename, 60, "time_latency_dist_%Y-%m-%d_%H-%M.data", &tm);
+    myfile.open(filename, std::ios::out | std::ios::binary);
+    for(const auto& arr : m_time_lat_list) {
+        float time = (float) arr[0];
+        float lat = (float) arr[1];
+        myfile.write( reinterpret_cast<const char*>( &time ), sizeof ( float )); // elapsed time since start
+        myfile.write( reinterpret_cast<const char*>( &lat ), sizeof ( float )); // latency
+    }
+    myfile.close();
 }
 
 CRFC2544Info CRFC2544Info::operator+= (const CRFC2544Info& in) {
@@ -470,6 +485,10 @@ RXLatency::handle_correct_flow(
     uint64_t d = (hr_time_now - fsp_head->time_stamp );
     dsec_t ctime = ptime_convert_hr_dsec(d);
     curr_rfc2544->add_sample(ctime);
+    uint64_t d_start = (hr_time_now - timer_gd.m_start_time);
+    dsec_t start = ptime_convert_hr_dsec(d_start);
+    std::array<dsec_t, 2> v = {start, ctime};
+    curr_rfc2544->add_time_lat(v);
 }
 
 void

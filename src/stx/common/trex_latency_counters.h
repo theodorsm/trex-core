@@ -4,6 +4,7 @@
 #include "stl/trex_stl_fs.h"
 #include "time_histogram.h"
 #include "utl_jitter.h"
+#include <list>
 
 /**************************************
  * CRFC2544Info
@@ -35,6 +36,7 @@ class CRFC2544Info {
     inline bool no_flow_seq() {return (m_exp_flow_seq == FLOW_STAT_PAYLOAD_INITIAL_FLOW_SEQ) ? true : false;}
     CRFC2544Info operator+= (const CRFC2544Info& in);
     friend std::ostream& operator<<(std::ostream& os, const CRFC2544Info& in);
+    inline void add_time_lat(std::array<dsec_t, 2> v) {m_time_lat_list.push_back(v);}
 
  private:
     uint32_t m_seq; // expected next seq num
@@ -48,6 +50,7 @@ class CRFC2544Info {
     uint16_t m_exp_flow_seq; // flow sequence number we should see in latency header
     // flow sequence number previously used with this id. We use this to catch packets arriving late from an old flow
     uint16_t m_prev_flow_seq;
+    std::list<std::array<dsec_t, 2>> m_time_lat_list; // list containing array with timestamp and latency
 };
 
 std::ostream& operator<<(std::ostream& os, const CRFC2544Info& in);
